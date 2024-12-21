@@ -115,3 +115,61 @@ generate_eth_definitions() {
 # Call the function
 generate_eth_definitions
 ```
+
+
+
+
+# A far more comprehensive example:
+
+
+```
+
+get_ports_for_containers() {
+    local container_name="$1"
+    local container_var_prefix="$2"
+
+    echo "Fetching ports for $container_name container..."
+
+    # Host-facing ports
+    local host_ports
+    host_ports=$(docker inspect -f '{{range $p, $conf := .NetworkSettings.Ports}}{{$p}}:{{(index $conf 0).HostPort}}{{"\n"}}{{end}}' "$container_name" | awk -F: '{print $2}')
+
+    # Container-internal ports
+    local container_ports
+    container_ports=$(docker inspect -f '{{range $p, $conf := .NetworkSettings.Ports}}{{$p}}{{"\n"}}{{end}}' "$container_name" | awk -F/ '{print $1}')
+
+    # Assign host-facing ports and container-internal ports to variables
+    eval "${container_var_prefix}_FORHOST_PORTS=($host_ports)"
+    eval "${container_var_prefix}_FORCONTAINER_PORTS=($container_ports)"
+
+    # Display for verification (optional)
+    echo "${container_var_prefix}_FORHOST_PORTS: ${host_ports[*]}"
+    echo "${container_var_prefix}_FORCONTAINER_PORTS: ${container_ports[*]}"
+}
+
+capture_ports_for_both_containers() {
+    # Capture host-facing and container-internal ports for CONTAINER1
+    get_ports_for_containers "$CONTAINER1_NAME" "CONTAINER1"
+    local container1_host_ports=("${CONTAINER1_FORHOST_PORTS[@]}")
+    local container1_internal_ports=("${CONTAINER1_FORCONTAINER_PORTS[@]}")
+
+    # Format ports for CONTAINER1
+    CONTAINER1_HOST_PORTS=$(format_ports "CONTAINER1_HOST" "${container1_host_ports[@]}")
+    CONTAINER1_CONTAINER_PORTS=$(format_ports "CONTAINER1_INTERNAL" "${container1_internal_ports[@]}")
+
+    # Capture host-facing and container-internal ports for CONTAINER2
+    get_ports_for_containers "$CONTAINER2_NAME" "CONTAINER2"
+    local container2_host_ports=("${CONTAINER2_FORHOST_PORTS[@]}")
+    local container2_internal_ports=("${CONTAINER2_FORCONTAINER_PORTS[@]}")
+
+    # Format ports for CONTAINER2
+    CONTAINER2_HOST_PORTS=$(format_ports "CONTAINER2_HOST" "${container2_host_ports[@]}")
+    CONTAINER2_CONTAINER_PORTS=$(format_ports "CONTAINER2_INTERNAL" "${container2_internal_ports[@]}")
+
+    # Output for appending to .env
+        echo -e "$CONTAINER1_HOST_PORTS"
+        echo -e "$CONTAINER1_CONTAINER_PORTS"
+        echo -e "$CONTAINER2_HOST_PORTS"
+        echo -e "$CONTAINER2_CONTAINER_PORTS"
+}
+```
