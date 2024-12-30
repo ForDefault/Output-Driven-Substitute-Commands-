@@ -146,6 +146,7 @@ get_ports_for_containers() {
     echo "${container_var_prefix}_FORHOST_PORTS: ${host_ports[*]}"
     echo "${container_var_prefix}_FORCONTAINER_PORTS: ${container_ports[*]}"
 }
+
 format_ports() {
     local container_var_prefix="$1"
     shift
