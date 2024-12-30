@@ -146,6 +146,18 @@ get_ports_for_containers() {
     echo "${container_var_prefix}_FORHOST_PORTS: ${host_ports[*]}"
     echo "${container_var_prefix}_FORCONTAINER_PORTS: ${container_ports[*]}"
 }
+format_ports() {
+    local container_var_prefix="$1"
+    shift
+    local ports=("$@")
+    local formatted_ports="${container_var_prefix}_PORTS=\n"  # Initialize top-level variable
+
+    for i in "${!ports[@]}"; do
+        formatted_ports+="${container_var_prefix}_PORT_$((i + 1))=\"${ports[i]}\"\n"
+    done
+
+    echo -e "$formatted_ports"
+}
 
 capture_ports_for_both_containers() {
     # Capture host-facing and container-internal ports for CONTAINER1
